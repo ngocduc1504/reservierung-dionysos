@@ -3,7 +3,6 @@ const nodemailer = require("nodemailer");
 
 exports.handler = async function (event) {
   const data = JSON.parse(event.body);
-  const { name, email, phone, date, time, guests, message } = data;
 
   const transporter = nodemailer.createTransport({
     host: "smtp.strato.de",
@@ -17,30 +16,30 @@ exports.handler = async function (event) {
 
   try {
     await transporter.sendMail({
-      from: \`Reservierung <\${process.env.SMTP_USER}>\`,
+      from: `"Reservierung" <${process.env.SMTP_USER}>`,
       to: "info@dionysos-gotha.de",
       subject: "Neue Reservierung über die Website",
-      text: \`
+      text: `
 Neue Reservierung:
 
-Name: \${name}
-E-Mail: \${email}
-Telefon: \${phone}
-Datum: \${date}
-Uhrzeit: \${time}
-Anzahl der Gäste: \${guests}
-Nachricht: \${message}
-      \`,
+Name: ${data.name}
+E-Mail: ${data.email}
+Telefon: ${data.phone}
+Datum: ${data.date}
+Uhrzeit: ${data.time}
+Gästeanzahl: ${data.guests}
+Nachricht: ${data.message}
+      `,
     });
 
     return {
       statusCode: 200,
-      body: JSON.stringify({ success: true }),
+      body: JSON.stringify({ message: "E-Mail wurde erfolgreich gesendet." }),
     };
   } catch (error) {
     return {
       statusCode: 500,
-      body: JSON.stringify({ success: false, error: error.message }),
+      body: JSON.stringify({ message: "Fehler beim Senden: " + error.message }),
     };
   }
 };
