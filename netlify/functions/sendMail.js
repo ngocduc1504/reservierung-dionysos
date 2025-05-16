@@ -1,4 +1,3 @@
-
 const nodemailer = require("nodemailer");
 
 exports.handler = async function (event) {
@@ -9,6 +8,7 @@ exports.handler = async function (event) {
   const datum = data.get("datum");
   const uhrzeit = data.get("uhrzeit");
   const nachricht = data.get("nachricht");
+  const anzahl = data.get("anzahl_gaeste"); // <- hinzugefügt
 
   const transporter = nodemailer.createTransport({
     host: "smtp.strato.de",
@@ -33,6 +33,7 @@ E-Mail: ${email}
 Telefon: ${telefon}
 Datum: ${datum}
 Uhrzeit: ${uhrzeit}
+Anzahl der Gäste: ${anzahl}
 Nachricht: ${nachricht}
       `,
     });

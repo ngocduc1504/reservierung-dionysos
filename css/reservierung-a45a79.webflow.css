@@ -4539,6 +4539,12 @@ figcaption {
   margin-right: -59px;
 }
 
+.booking {
+  justify-content: center;
+  align-items: center;
+  display: flex;
+}
+
 @media screen and (min-width: 1440px) {
   .container-full.no-max-width {
     max-width: none;
