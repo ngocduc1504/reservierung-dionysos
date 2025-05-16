@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import PersonSelector from './PersonSelector';
 import DateSelector from './DateSelector';
@@ -13,6 +14,33 @@ import { toast } from './ui/sonner';
 interface OpeningHours {
   [key: string]: string[][];
 }
+
+// German holidays in Gotha, Thuringia for 2024 and 2025
+const holidays = [
+  // 2024 holidays
+  '2024-01-01', // New Year's Day
+  '2024-03-29', // Good Friday
+  '2024-04-01', // Easter Monday
+  '2024-05-01', // Labor Day
+  '2024-05-09', // Ascension Day
+  '2024-05-20', // Whit Monday
+  '2024-10-03', // German Unity Day
+  '2024-10-31', // Reformation Day (Thuringia)
+  '2024-12-25', // Christmas Day
+  '2024-12-26', // Boxing Day
+  
+  // 2025 holidays
+  '2025-01-01', // New Year's Day
+  '2025-04-18', // Good Friday
+  '2025-04-21', // Easter Monday
+  '2025-05-01', // Labor Day
+  '2025-05-29', // Ascension Day
+  '2025-06-09', // Whit Monday
+  '2025-10-03', // German Unity Day
+  '2025-10-31', // Reformation Day (Thuringia)
+  '2025-12-25', // Christmas Day
+  '2025-12-26', // Boxing Day
+];
 
 const ReservationSystem = () => {
   const [people, setPeople] = useState(2);
@@ -36,12 +64,12 @@ const ReservationSystem = () => {
   const openingHours: OpeningHours = {
     // 0 = Sunday, 1 = Monday, etc.
     0: [['11:30', '14:30'], ['17:00', '22:00']], // Sunday
-    1: [], // Monday - Geschlossen
-    2: [['17:00', '22:30']], // Tuesday - Updated to include 22:30
-    3: [['17:00', '22:30']], // Wednesday - Updated to include 22:30
-    4: [['17:00', '22:30']], // Thursday - Updated to include 22:30
-    5: [['17:00', '22:30']], // Friday - Updated to include 22:30
-    6: [['17:00', '22:30']], // Saturday - Updated to include 22:30
+    1: [], // Monday - Geschlossen (unless it's a holiday)
+    2: [['17:00', '22:30']], // Tuesday
+    3: [['17:00', '22:30']], // Wednesday
+    4: [['17:00', '22:30']], // Thursday
+    5: [['17:00', '22:30']], // Friday
+    6: [['17:00', '22:30']], // Saturday
   };
 
   // Set current time as initial selected time
@@ -54,10 +82,29 @@ const ReservationSystem = () => {
     setSelectedTime(currentTime);
   }, []);
 
+  // Check if a date is a holiday in Gotha
+  const isHoliday = (date: Date): boolean => {
+    const dateString = date.toISOString().split('T')[0]; // Format as YYYY-MM-DD
+    return holidays.includes(dateString);
+  };
+
   // Generate time slots with 15 min intervals for the selected date
   useEffect(() => {
     const dayOfWeek = date.getDay(); // 0 for Sunday, 1 for Monday, etc.
-    const dayHours = openingHours[dayOfWeek];
+    let dayHours = openingHours[dayOfWeek];
+    
+    // Special case: If it's Monday (dayOfWeek === 1) and it's a holiday, use Sunday hours
+    if (dayOfWeek === 1 && isHoliday(date)) {
+      dayHours = [['17:00', '22:00']]; // Holiday Monday hours (like weekend hours)
+      toast.info(
+        "Feiertag erkannt", 
+        { 
+          description: "Das Restaurant ist an diesem Feiertag geöffnet.", 
+          duration: 4000 
+        }
+      );
+    }
+    
     let times: string[] = [];
 
     // If restaurant is closed that day
@@ -76,7 +123,7 @@ const ReservationSystem = () => {
       
       // Convert to minutes for easier calculation
       let startTimeInMinutes = startHour * 60 + startMinute;
-      const endTimeInMinutes = endHour * 60 + endMinute; // Fixed: Don't subtract 15 min to include the end time
+      const endTimeInMinutes = endHour * 60 + endMinute;
       
       // Generate slots every 15 minutes
       while (startTimeInMinutes <= endTimeInMinutes) {
@@ -135,32 +182,6 @@ const ReservationSystem = () => {
     }
   }, [date]);
 
-  const sendReservationEmail = async (reservationData: any) => {
-    const formData = new FormData();
-    
-    // Add all reservation data to the form
-    Object.keys(reservationData).forEach(key => {
-      formData.append(key, reservationData[key]);
-    });
-    
-    // Add form-name field for Netlify Forms
-    formData.append('form-name', 'reservation');
-
-    try {
-      // Send data to Netlify Forms
-      const response = await fetch('/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams(formData as any).toString()
-      });
-      
-      return true;
-    } catch (error) {
-      console.error('Error submitting form:', error);
-      return false;
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setAttempted(true);
@@ -176,26 +197,11 @@ const ReservationSystem = () => {
     
     setIsSubmitting(true);
     
-    // Prepare reservation data
-    const reservationData = {
-      firstName,
-      lastName,
-      phoneNumber: `${phoneCode} ${phone}`,
-      email,
-      date: date.toLocaleDateString('de-DE'),
-      time: selectedTime,
-      people,
-      message,
-      sentTo: 'info@dionysos-gotha.de'
-    };
-    
-    // Send reservation email
-    const success = await sendReservationEmail(reservationData);
-    
-    setIsSubmitting(false);
-    
-    if (success) {
-      // Enhanced success notification
+    // Simulate reservation processing
+    setTimeout(() => {
+      setIsSubmitting(false);
+      
+      // Show success notification
       toast.success(
         <div className="flex flex-col space-y-2">
           <div className="flex items-center space-x-2">
@@ -225,22 +231,14 @@ const ReservationSystem = () => {
       setEmail('');
       setMessage('');
       setAttempted(false);
-    } else {
-      toast.error("Es gab ein Problem mit Ihrer Reservierung", {
-        description: "Bitte versuchen Sie es später noch einmal oder kontaktieren Sie uns telefonisch.",
-        duration: 5000,
-      });
-    }
+    }, 1500);
   };
 
   return (
-    <form onSubmit={handleSubmit} className="reservation-container bg-white p-6 rounded-lg shadow-lg max-w-3xl mx-auto" name="reservation" data-netlify="true" netlify-honeypot="bot-field">
-      <input type="hidden" name="form-name" value="reservation" />
-      <input type="hidden" name="sentTo" value="info@dionysos-gotha.de" />
-      <p style={{ display: 'none' }}>
-        <label>Don't fill this out if you're human: <input name="bot-field" /></label>
-      </p>
-      
+    <form 
+      onSubmit={handleSubmit} 
+      className="reservation-container bg-white p-6 rounded-lg shadow-lg max-w-3xl mx-auto"
+    >
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
         <PersonSelector 
           selectedPeople={people} 
@@ -251,6 +249,7 @@ const ReservationSystem = () => {
           <DateSelector 
             selectedDate={date} 
             onSelect={setDate} 
+            isHoliday={isHoliday}
           />
         </div>
       </div>

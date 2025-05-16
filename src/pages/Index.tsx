@@ -14,19 +14,6 @@ const Index = () => {
         </div>
         <h2 className="text-3xl font-bold text-center text-gray-800 mb-8">Tisch reservieren</h2>
         <ReservationSystem />
-        
-        {/* Hidden form for Netlify form pre-rendering */}
-        <form name="reservation" netlify netlify-honeypot="bot-field" hidden>
-          <input type="text" name="firstName" />
-          <input type="text" name="lastName" />
-          <input type="text" name="phoneNumber" />
-          <input type="email" name="email" />
-          <input type="text" name="date" />
-          <input type="text" name="time" />
-          <input type="number" name="people" />
-          <textarea name="message"></textarea>
-          <input type="text" name="sentTo" />
-        </form>
       </div>
     </div>
   );

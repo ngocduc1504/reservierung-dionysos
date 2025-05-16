@@ -11,15 +11,21 @@ import { cn } from "@/lib/utils";
 interface DateSelectorProps {
   selectedDate: Date;
   onSelect: (date: Date) => void;
+  isHoliday?: (date: Date) => boolean;
 }
 
-const DateSelector = ({ selectedDate, onSelect }: DateSelectorProps) => {
+const DateSelector = ({ selectedDate, onSelect, isHoliday }: DateSelectorProps) => {
   const [open, setOpen] = useState(false);
   
   // Format the date to display "Heute" for today
   const displayDate = isToday(selectedDate) 
     ? "Heute" 
     : format(selectedDate, "d. MMMM", { locale: de });
+
+  // Check if selected date is a holiday
+  const holidayStatus = isHoliday && isHoliday(selectedDate) 
+    ? " (Feiertag)" 
+    : "";
 
   // Disable dates before today
   const disableDates = (date: Date) => {
@@ -37,7 +43,12 @@ const DateSelector = ({ selectedDate, onSelect }: DateSelectorProps) => {
             variant="outline" 
             className="select-container w-full justify-between"
           >
-            <span>{displayDate}</span>
+            <span>
+              {displayDate}
+              {holidayStatus && (
+                <span className="ml-1 text-red-500 font-medium">{holidayStatus}</span>
+              )}
+            </span>
             <CalendarIcon className="h-4 w-4 opacity-50" />
           </Button>
         </PopoverTrigger>
